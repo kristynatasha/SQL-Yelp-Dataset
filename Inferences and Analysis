@@ -1,0 +1,146 @@
+Part 2: Inferences and Analysis
+
+1. Pick one city and category of your choice and group the businesses in that city or category by their overall star rating. Compare the businesses with 2-3 stars to the businesses with 4-5 stars and answer the following questions. Include your code.
+
+There are 2 groups used for this analysis.
+Group A: Businesses with 2-3 stars and have more than 50 reviews in Las Vegas
+Group B: Businesses with 4-5 stars and have more than 50 reviews in Las Vegas
+	
+i. Do the two groups you chose to analyze have a different distribution of hours?
+Group A has a distribution hours of 11:00-00:00, while Group B has a distribution hours of 10:00-23:00 and 11:00-20:00 (8:00-14:00 on weekend).
+
+ii. Do the two groups you chose to analyze have a different number of reviews?
+Group A has around 168-768 reviews, while Group B has 123 reviews.
+   
+iii. Are you able to infer anything from the location data provided between these two groups? Explain.
+Business in Group A (2-3 stars) and Group B (4-5 stars) located in Las Vegas have similar hours of operation (with Group B closing earlier). However, Group A has a wide range of review counts. This could be indicative of several factors. It is possible that business with higher star ratings (Group B) may attract a more satisfied customer base, resulting in fewer reviews compared to businesses with lower star ratings (Group A). Additionally, businesses in Group A with a broader range of review counts may indicate varying customer experiences, with some customers being more vocal about their experiences.
+
+SQL code used for analysis:
+SELECT B.name, B.stars, B.review_count, H.hours,
+       CASE
+           WHEN B.stars BETWEEN 2 AND 3 THEN 'Group A: 2-3 stars'
+           WHEN B.stars BETWEEN 4 AND 5 THEN 'Group B: 4-5 stars'
+       END AS group_label
+FROM business B
+JOIN hours H ON B.id = H.business_id
+WHERE B.city = 'Las Vegas'
+AND B.stars NOT IN (3.5)
+AND B.review_count > 50
+ORDER BY B.stars DESC;
+
++---------------------+-------+--------------+-----------------------+--------------------+
+| name                | stars | review_count | hours                 | group_label        |
++---------------------+-------+--------------+-----------------------+--------------------+
+| Jacques Cafe        |   4.0 |          168 | Monday|11:00-20:00    | Group B: 4-5 stars |
+| Jacques Cafe        |   4.0 |          168 | Tuesday|11:00-20:00   | Group B: 4-5 stars |
+| Jacques Cafe        |   4.0 |          168 | Friday|11:00-20:00    | Group B: 4-5 stars |
+| Jacques Cafe        |   4.0 |          168 | Wednesday|11:00-20:00 | Group B: 4-5 stars |
+| Jacques Cafe        |   4.0 |          168 | Thursday|11:00-20:00  | Group B: 4-5 stars |
+| Jacques Cafe        |   4.0 |          168 | Sunday|8:00-14:00     | Group B: 4-5 stars |
+| Jacques Cafe        |   4.0 |          168 | Saturday|11:00-20:00  | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Monday|10:00-23:00    | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Tuesday|10:00-23:00   | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Friday|10:00-23:00    | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Wednesday|10:00-23:00 | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Thursday|10:00-23:00  | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Sunday|10:00-23:00    | Group B: 4-5 stars |
+| Big Wong Restaurant |   4.0 |          768 | Saturday|10:00-23:00  | Group B: 4-5 stars |
+| Wingstop            |   3.0 |          123 | Monday|11:00-0:00     | Group A: 2-3 stars |
+| Wingstop            |   3.0 |          123 | Tuesday|11:00-0:00    | Group A: 2-3 stars |
+| Wingstop            |   3.0 |          123 | Friday|11:00-0:00     | Group A: 2-3 stars |
+| Wingstop            |   3.0 |          123 | Wednesday|11:00-0:00  | Group A: 2-3 stars |
+| Wingstop            |   3.0 |          123 | Thursday|11:00-0:00   | Group A: 2-3 stars |
+| Wingstop            |   3.0 |          123 | Sunday|11:00-0:00     | Group A: 2-3 stars |
+| Wingstop            |   3.0 |          123 | Saturday|11:00-0:00   | Group A: 2-3 stars |
++---------------------+-------+--------------+-----------------------+--------------------+
+		
+		
+2. Group business based on the ones that are open and the ones that are closed. What differences can you find between the ones that are still open and the ones that are closed? List at least two differences and the SQL code you used to arrive at your answer.
+		
+i. Difference 1:
+The number of reviews differ between open and closed businesses. Open businesses have a higher number of reviews compared to closed businesses. The highest review count for open business is 3873, while for closed business it's only 400.
+         
+ii. Difference 2
+The star rating of the business differ between open and closed businesses. Open businesses have higher average star ratings than closed businesses. There are 2642 open business with the rating of 1-3 stars and 5838 open business with the rating of 3.5-5 stars.
+         
+SQL code used for analysis:
+
+--To know the highest review count for open and closed business
+SELECT name, stars, review_count,
+       CASE
+           WHEN is_open = 1 THEN 'Open'
+           ELSE 'Closed'
+       END AS status
+FROM business
+ORDER BY review_count DESC;
+
+--To count how many businesses are open and closed in the 4-5 star rating category compared to the 2-3 star rating category
+SELECT
+  CASE
+    WHEN stars BETWEEN 3.5 AND 5 THEN '3.5-5 stars'
+    WHEN stars BETWEEN 1 AND 3 THEN '1-3 stars'
+  END AS star_category,
+  SUM(CASE WHEN is_open = 1 THEN 1 ELSE 0 END) AS open_count,
+  SUM(CASE WHEN is_open = 0 THEN 1 ELSE 0 END) AS closed_count
+FROM business
+GROUP BY star_category;
+
++---------------+------------+--------------+
+| star_category | open_count | closed_count |
++---------------+------------+--------------+
+| 1-3 stars     |       2642 |          572 |
+| 3.5-5 stars   |       5838 |          948 |
++---------------+------------+--------------+
+	
+3. For this last part of your analysis, you are going to choose the type of analysis you want to conduct on the Yelp dataset and are going to prepare the data for analysis.
+
+Ideas for analysis include: Parsing out keywords and business attributes for sentiment analysis, clustering businesses to find commonalities or anomalies between them, predicting the overall star rating for a business, predicting the number of fans a user will have, and so on. These are just a few examples to get you started, so feel free to be creative and come up with your own problem you want to solve. Provide answers, in-line, to all of the following:
+	
+i. Indicate the type of analysis you chose to do:
+The type of analysis that I choose is "Neighborhood-Based Prediction" for the star rating of a target business. The analysis predicts the star rating for the target business "Delmonico Steakhouse" based on the average star ratings of similar businesses in the same neighborhood.
+
+ii. Write 1-2 brief paragraphs on the type of data you will need for your analysis and why you chose that data:
+For this analysis, the required data includes the business table (which contains information about various businesses including their names, neighborhoods, cities, states, and star ratings) and the name of the target business for which I want to predict the star rating, which is "Delmonico Steakhouse".
+
+The reason for choosing this data is to perform a neighborhood-based prediction for the star rating of the target business. By calculating the average star ratings of other businesses in the same neighborhood within the star rating range of 2-3 stars and 4-5 stars, the analysis aims to predict the star rating for "Delmonico Steakhouse" based on the ratings of similar businesses in the vicinity.
+
+iii. Output of your finished dataset:
++----------------------+------------------------------+----------------------------+-----------------------+
+| target_business_name | target_business_neighborhood | target_business_city_state | predicted_star_rating |
++----------------------+------------------------------+----------------------------+-----------------------+
+| Delmonico Steakhouse | The Strip                    | Las Vegas NV               |         3.56456556503 |
++----------------------+------------------------------+----------------------------+-----------------------+
+
+This analysis predicts that the star rating for "Delmonico Steakhouse" is approximately 3.56, which falls between the 3-4 star range. The prediction is based on the premise that businesses in the same neighborhood will have similar star ratings, however actual customer evaluations and experieinces may differ and this prediction merely an estimate based on available data.
+
+iv. Provide the SQL code you used to create your final dataset:
+SELECT 
+    tb.name AS target_business_name,
+    tb.neighborhood AS target_business_neighborhood,
+    tb.city || " " || tb.state AS target_business_city_state,
+    CASE
+        WHEN avg_stars_2_3 IS NULL THEN avg_stars_4_5
+        WHEN avg_stars_4_5 IS NULL THEN avg_stars_2_3
+        ELSE (avg_stars_2_3 + avg_stars_4_5) / 2.0
+    END AS predicted_star_rating
+FROM (
+    SELECT *
+    FROM business
+    WHERE name = 'Delmonico Steakhouse'
+) tb
+LEFT JOIN (
+    SELECT neighborhood, 
+           AVG(stars) AS avg_stars_2_3
+    FROM business
+    WHERE stars BETWEEN 2 AND 3
+          AND name != 'Delmonico Steakhouse'
+    GROUP BY neighborhood
+) AS similar_2_3_stars ON tb.neighborhood = similar_2_3_stars.neighborhood
+LEFT JOIN (
+    SELECT neighborhood, 
+           AVG(stars) AS avg_stars_4_5
+    FROM business
+    WHERE stars BETWEEN 4 AND 5
+          AND name != 'Delmonico Steakhouse'
+    GROUP BY neighborhood
+) AS similar_4_5_stars ON tb.neighborhood = similar_4_5_stars.neighborhood;
